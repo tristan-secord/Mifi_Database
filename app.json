@@ -1,0 +1,14 @@
+{
+  "name": "mifi",
+  "description": "Allow access to your wifi with the click of a button.",
+  "keywords": [
+    "dokku",
+    "rails",
+    "mifi"
+  ],
+  "scripts": {
+    "dokku": {
+      "postdeploy": "bundle exec rake db:migrate"
+    }
+  }
+}
