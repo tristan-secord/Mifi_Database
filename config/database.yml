@@ -27,5 +27,5 @@ test:
 production:
   <<: *default
   database: db_mifi
-  url: <%= ENV['POSTGRESQL_URL']
+  url: <%= ENV["POSTGRESQL_URL"] %>
   encoding: unicode
