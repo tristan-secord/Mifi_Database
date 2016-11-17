@@ -42,6 +42,6 @@ class ApiController < ApplicationController
 	end	
 
 	def test
-		render :json => "Success".as_json
+		render :json => "Success".as_json, :status => 200
 	end
 end
