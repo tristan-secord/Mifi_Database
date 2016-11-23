@@ -8,7 +8,7 @@ class CreateUsers < ActiveRecord::Migration[5.0]
     t.string :password_hash
     t.string :password_salt
       
-    boolean :email_verification, :default => false
+    t.boolean :email_verification, :default => false
     t.string :verification_code      
     
     t.string :api_authtoken
