@@ -48,7 +48,7 @@ class ApiController < ApplicationController
 
 				if user
 					if User.authenticate(params[:email], params[:password])
-						device = Device.where(:device_id => params[:device_id])
+						device = Device.where(:device_id => params[:device_id]).first
 						if device
 							if !device.api_authtoken || (device.api_authtoken && device.authtoken_expiry < Time.now)
 								auth_token = rand_string(20)
