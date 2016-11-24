@@ -53,7 +53,7 @@ class ApiController < ApplicationController
 							if !device.api_authtoken || (device.api_authtoken && device.authtoken_expiry < Time.now)
 								auth_token = rand_string(20)
 								auth_expiry = Time.now + (24*60*60*30)
-								while User.where(:api_authtoken => auth_token).first != nil
+								while Device.where(:api_authtoken => auth_token).first != nil
 									auth_token = rand_string(20)
 									auth_expiry = Time.now + (24*60*60*30)
 								end
@@ -62,7 +62,7 @@ class ApiController < ApplicationController
 						else
 							auth_token = rand_string(20)
 							auth_expiry = Time.now + (24*60*60*30)
-							while User.where(:api_authtoken => auth_token).first != nil
+							while Device.where(:api_authtoken => auth_token).first != nil
 									auth_token = rand_string(20)
 									auth_expiry = Time.now + (24*60*60*30)
 							end
