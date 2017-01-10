@@ -3,6 +3,8 @@ Rails.application.routes.draw do
 
   post 'api/signup'
   post 'api/signin'
+  post 'api/add_network'
+  post 'api/search_networks'
 
   match "*path", to: "application#page_not_found", via: :all
 end

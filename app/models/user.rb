@@ -15,8 +15,8 @@ class User < ActiveRecord::Base
 		if password.present?
 			self.password_salt = BCrypt::Engine.generate_salt
 			self.password_hash = BCrypt::Engine.hash_secret(password, password_salt)
-		end 
-	end 
+		end
+	end
 
 	def self.authenticate(login_name, password)
 		user = self.where("email =?", login_name).first
