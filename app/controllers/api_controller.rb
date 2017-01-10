@@ -1,6 +1,6 @@
 class ApiController < ApplicationController
 	http_basic_authenticate_with name:ENV["API_AUTH_NAME"], password:ENV["API_AUTH_PASSWORD"], :only => [:signup, :signin, :get_token]
-	before_action :check_for_valid_authtoken, :except => [:signup, :signin, :get_token, :search_networks]
+	before_action :check_for_valid_authtoken, :except => [:signup, :signin, :get_token]
 
 	def signup
 		if request.post?
@@ -139,7 +139,7 @@ class ApiController < ApplicationController
 
         @possible_networks = Network.where('? < networks.latitude AND networks.latitude < ? AND ? < networks.longitude AND networks.longitude < ?', (latitude - 1.0 / 111), (latitude + 1.0 / 111), (longitude - 1.0 / (111 * Math.cos(latitude))), (longitude + 1.0 / (111 * Math.cos(latitude))))
 
-        # CHANGE 
+        # CHANGE
         ## Haversine function is computationally heavy - by reducing the search above and using possible networks
         ## it reduces the computation on the server
         ## MAY NEED TO CHANGE THIS TO A SPECIFIC QUEUE
