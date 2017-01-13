@@ -1,4 +1,6 @@
 class User < ActiveRecord::Base
+  has_and_belongs_to_many :networks, :join_table => :networks_users
+
 	ActiveRecord::Base.include_root_in_json = false
 	attr_accessor :password
 	before_save :encrypt_password

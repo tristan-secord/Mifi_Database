@@ -48,28 +48,22 @@ class ApiController < ApplicationController
 
 				if user
 					if User.authenticate(params[:email], params[:password])
+            if !user[:api_authtoken] || (user[:api_authtoken] && user[:authtoken_expiry] < Time.now)
+              auth_token = rand_string(20)
+              auth_expiry = Time.now + (24*60*60*30)
+              while User.where(:api_authtoken => auth_token).first != nil
+                auth_token = rand_string(20)
+              end
+              user.update_attributes(:api_authtoken => auth_token, :authtoken_expiry => auth_expiry)
+            end
+
+
 						device = Device.where(:device_id => params[:device_id]).first
-						if device
-							if !device.api_authtoken || (device.api_authtoken && device.authtoken_expiry < Time.now)
-								auth_token = rand_string(20)
-								auth_expiry = Time.now + (24*60*60*30)
-								while Device.where(:api_authtoken => auth_token).first != nil
-									auth_token = rand_string(20)
-									auth_expiry = Time.now + (24*60*60*30)
-								end
-								device.update_attributes(:api_authtoken => auth_token, :authtoken_expiry => auth_expiry)
-							end
-						else
-							auth_token = rand_string(20)
-							auth_expiry = Time.now + (24*60*60*30)
-							while Device.where(:api_authtoken => auth_token).first != nil
-									auth_token = rand_string(20)
-									auth_expiry = Time.now + (24*60*60*30)
-							end
-							device = Device.new(:user_id => user[:id], :device_id => params[:device_id], :api_authtoken => auth_token, :authtoken_expiry => auth_expiry)
+						if !device
+							device = Device.new(:user_id => user[:id], :device_id => params[:device_id])
 						end
 						device.save
-						render :json => device.as_json(:only => [:api_authtoken, :authtoken_expiry]), status => 200
+            render :json => user.as_json(:only => [:first_name, :last_name, :email, :api_authtoken, :authtoken_expiry])
 					else
 						e = Error.new(:status => 401, :message => "I think you may have entered the wrong password...")
 						render :json => e.to_json, :status => 401
@@ -108,7 +102,9 @@ class ApiController < ApplicationController
         network = Network.new(network_params)
 
         if network.save
-          #
+          #connect user to network and vice-versa
+          network.users << @user
+          @user.networks << network
 					render :nothing => true, :status => 200
 				else
 					error_str = ""
@@ -137,7 +133,7 @@ class ApiController < ApplicationController
         latitude = params[:latitude].to_f
         longitude = params[:longitude].to_f
 
-        @possible_networks = Network.where('? < networks.latitude AND networks.latitude < ? AND ? < networks.longitude AND networks.longitude < ?', (latitude - 1.0 / 111), (latitude + 1.0 / 111), (longitude - 1.0 / (111 * Math.cos(latitude))), (longitude + 1.0 / (111 * Math.cos(latitude))))
+        @possible_networks = Network.where('? < networks.latitude AND networks.latitude < ? AND ? < networks.longitude AND networks.longitude < ? AND networks.discoverable == ?', (latitude - 1.0 / 111), (latitude + 1.0 / 111), (longitude - 1.0 / (111 * Math.cos(latitude))), (longitude + 1.0 / (111 * Math.cos(latitude))), true)
 
         # CHANGE
         ## Haversine function is computationally heavy - by reducing the search above and using possible networks
@@ -158,6 +154,23 @@ class ApiController < ApplicationController
     end
   end
 
+  def remove_network
+    if request.post?
+      if params && params[:bssid]
+        begin
+          decrypted_bssid = AESCrypt.decrypt(params[:bssid], ENV["API_AUTH_PASSWORD"])
+        rescue Exception => e
+          decrypted_bssid = nil
+        end
+        Network.destroy(@user.networks.where(:bssid => decrypted_bssid))
+        render :nothing => true, :status => 200
+      else
+        e = Error.new(:status => 400, :message => "Looks like your missing some vital information!")
+        render :json => e.to_json, :status => 400
+      end
+    end
+  end
+
 	def rand_string(len)
     	o =  [('a'..'z'),('A'..'Z')].map{|i| i.to_a}.flatten
     	string  =  (0..len).map{ o[rand(o.length)]  }.join
@@ -171,7 +184,7 @@ class ApiController < ApplicationController
 	end
 
   def network_params
-    params.require(:network).permit(:name, :discoverable, :password, :password_hash, :password_salt, :latitude, :longitude)
+    params.require(:network).permit(:name, :discoverable, :password, :password_hash, :password_salt, :latitude, :longitude, :bssid)
   end
 
 	 def check_for_valid_authtoken
